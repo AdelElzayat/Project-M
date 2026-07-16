@@ -1,40 +1,51 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StarField } from '../effects/ParticleField';
 import content from '../../config/content';
 
-const MessageBubble = ({ message, index, isVisible }) => {
-  const isSystem = message.type === 'system';
-  const isUser = message.sender === 'You';
+const colors = ['#C74B4B', '#4CAF50', '#7C5CBF', '#FFA726', '#4FC3F7', '#E74C7A', '#26C6DA', '#8D6E63'];
+
+const ChatMessage = ({ msg, index, isVisible }) => {
+  const color = colors[index % colors.length];
+  const isSystem = msg.type === 'system';
+  const isYou = msg.sender === 'You';
+
+  if (isSystem) {
+    return (
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            className="chat-system"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            {msg.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="chat-message"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15 }}
         >
-          <div
-            className={`max-w-[80%] px-4 py-2.5 rounded-2xl ${
-              isSystem
-                ? 'bg-white/5 text-white/40 text-xs italic text-center w-full max-w-full'
-                : isUser
-                ? 'bg-mystery/40 border border-mystery/30 text-white'
-                : 'glass text-white/90'
-            }`}
-          >
-            {!isSystem && (
-              <p className={`text-xs font-bold mb-1 ${
-                isUser ? 'text-mystery-light' : 'text-gold'
-              }`}>
-                {message.sender}
-              </p>
-            )}
-            <p className={`${isSystem ? 'text-center' : 'text-sm leading-relaxed'}`}>
-              {message.text}
-            </p>
+          <div className="chat-avatar" style={{ background: `${color}33`, color }}>
+            {msg.sender[0]}
+          </div>
+          <div className="chat-content">
+            <div className="chat-header">
+              <span className="chat-username" style={{ color: isYou ? '#9B7FD4' : color }}>
+                {msg.sender}
+              </span>
+              <span className="chat-timestamp">now</span>
+            </div>
+            <p className="chat-text">{msg.text}</p>
           </div>
         </motion.div>
       )}
@@ -42,38 +53,12 @@ const MessageBubble = ({ message, index, isVisible }) => {
   );
 };
 
-const TypingIndicator = ({ visible }) => (
-  <AnimatePresence>
-    {visible && (
-      <motion.div
-        className="flex justify-start mb-3"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-      >
-        <div className="glass px-4 py-3 rounded-2xl">
-          <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="w-2 h-2 rounded-full bg-gold/50"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
-              />
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
 const ChatScene = ({ onComplete }) => {
   const [visibleMessages, setVisibleMessages] = useState([]);
   const [typing, setTyping] = useState(false);
   const [allVisible, setAllVisible] = useState(false);
+  const [typingUser, setTypingUser] = useState('');
   const messagesEndRef = useRef(null);
-  const intervalRef = useRef(null);
 
   useEffect(() => {
     let currentIndex = 0;
@@ -81,24 +66,23 @@ const ChatScene = ({ onComplete }) => {
 
     const showNext = () => {
       if (currentIndex >= messages.length) {
-        setTimeout(() => setAllVisible(true), 1000);
+        setTimeout(() => setAllVisible(true), 800);
         return;
       }
-
       const msg = messages[currentIndex];
       setTyping(true);
+      setTypingUser(msg.sender !== 'System' ? msg.sender : '');
 
       setTimeout(() => {
         setTyping(false);
+        setTypingUser('');
         setVisibleMessages(prev => [...prev, currentIndex]);
         currentIndex++;
-        
-        setTimeout(showNext, msg.delay || 2000);
-      }, msg.sender === 'System' ? 500 : 1200);
+        setTimeout(showNext, msg.delay || 1500);
+      }, msg.sender === 'System' ? 400 : 900);
     };
 
-    setTimeout(showNext, 1000);
-
+    setTimeout(showNext, 800);
     return () => {};
   }, []);
 
@@ -107,84 +91,99 @@ const ChatScene = ({ onComplete }) => {
   }, [visibleMessages, typing]);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-dark-900 via-dark-800 to-dark-900 overflow-hidden">
-      <StarField count={40} />
+    <div className="absolute inset-0 bg-[#1E1E1E] flex flex-col">
+      {/* Top Bar */}
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <div className="w-6 h-6 rounded-full bg-[#7C5CBF] flex items-center justify-center text-white text-[10px] font-bold">#</div>
+          <span className="text-xs text-[#888]">Game Chat</span>
+        </div>
+        <div className="top-bar-right">
+          <span className="text-[10px] text-[#555]">8 online</span>
+        </div>
+      </div>
 
-      <div className="relative z-10 h-full flex flex-col">
-        {/* Chat Header */}
-        <div className="glass border-b border-white/5 px-4 py-3">
-          <div className="flex items-center gap-3 max-w-2xl mx-auto">
-            <motion.div
-              className="w-8 h-8 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <span className="text-gold text-xs">💬</span>
-            </motion.div>
-            <div>
-              <h2 className="text-gold text-sm font-bold">{content.chat.title}</h2>
-              <p className="text-[10px] text-white/30">8 players online</p>
-            </div>
-          </div>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto py-1">
+        <div className="section-header">
+          <span>Day 1</span>
+          <span className="text-[10px] text-[#555]">Today</span>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="max-w-2xl mx-auto">
-            {content.chat.messages.map((msg, i) => (
-              <MessageBubble
-                key={i}
-                message={msg}
-                index={i}
-                isVisible={visibleMessages.includes(i)}
-              />
-            ))}
-            <TypingIndicator visible={typing} />
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
+        {content.chat.messages.map((msg, i) => (
+          <ChatMessage key={i} msg={msg} index={i} isVisible={visibleMessages.includes(i)} />
+        ))}
 
-        {/* Input bar */}
-        <div className="glass border-t border-white/5 px-4 py-3">
-          <div className="flex items-center gap-3 max-w-2xl mx-auto">
-            <div className="flex-1 px-4 py-2.5 rounded-full bg-white/5 border border-white/10">
-              <p className="text-xs text-white/20">{content.chat.typingPlaceholder}</p>
-            </div>
-            <motion.div
-              className="w-9 h-9 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center cursor-pointer"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <span className="text-gold text-sm">➤</span>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Continue button */}
+        {/* Typing indicator */}
         <AnimatePresence>
-          {allVisible && (
+          {typing && (
             <motion.div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-20"
+              className="chat-message"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 1 }}
-                onClick={onComplete}
-                className="px-10 py-3 rounded-full border border-gold/40 text-gold 
-                           text-sm tracking-[0.2em] uppercase hover:bg-gold/10 
-                           transition-all duration-500 hover:border-gold/60
-                           hover:shadow-[0_0_30px_rgba(212,168,83,0.2)]"
-              >
-                Continue
-              </motion.button>
+              <div className="chat-avatar" style={{ background: `${colors[visibleMessages.length % colors.length]}33`, color: colors[visibleMessages.length % colors.length] }}>
+                {typingUser[0]}
+              </div>
+              <div className="chat-content">
+                <div className="chat-header">
+                  <span className="chat-username" style={{ color: colors[visibleMessages.length % colors.length] }}>{typingUser}</span>
+                </div>
+                <div className="flex gap-1 py-1">
+                  {[0,1,2].map(i => (
+                    <motion.div
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-[#555]"
+                      animate={{ y: [0, -3, 0] }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+                    />
+                  ))}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div ref={messagesEndRef} />
       </div>
+
+      {/* Input bar */}
+      <div className="px-3 py-2 border-t border-[#4A4A4A] bg-[#2C2C2C]">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            className="game-input text-[11px] flex-1"
+            placeholder={content.chat.typingPlaceholder}
+            disabled
+          />
+          <button className="game-btn game-btn-small text-[10px] px-2 py-1.5" disabled>
+            Send
+          </button>
+        </div>
+      </div>
+
+      {/* Continue overlay */}
+      <AnimatePresence>
+        {allVisible && (
+          <motion.div
+            className="absolute inset-0 bg-black/60 flex items-center justify-center z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.2 }}
+              onClick={onComplete}
+              className="game-btn game-btn-gold text-[11px] px-5 py-2"
+            >
+              Continue
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

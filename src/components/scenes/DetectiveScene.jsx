@@ -1,116 +1,72 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StarField, FogParticles } from '../effects/ParticleField';
 import content from '../../config/content';
 
-const EvidenceCard = ({ evidence, index, onClick }) => (
-  <motion.button
-    className="relative w-full p-4 rounded-xl overflow-hidden text-left"
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.15 }}
-    whileHover={{ scale: 1.02, y: -2 }}
-    whileTap={{ scale: 0.98 }}
+const evidenceColors = ['#D4A853', '#E74C7A', '#FFA726', '#7C5CBF', '#4CAF50'];
+const evidenceIcons = ['📞', '😂', '❤️', '🎮', '💍'];
+
+const EvidenceItem = ({ evidence, index, onClick }) => (
+  <motion.div
+    className="evidence-item"
+    initial={{ opacity: 0, x: -8 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: index * 0.1 }}
+    whileHover={{ background: 'rgba(255,255,255,0.03)' }}
     onClick={() => onClick(evidence)}
-    style={{
-      background: `linear-gradient(135deg, ${evidence.color}11, ${evidence.color}22)`,
-      border: `1px solid ${evidence.color}33`,
-      boxShadow: `0 0 20px ${evidence.color}11`,
-    }}
   >
-    <div className="flex items-center gap-4">
-      <div className="text-3xl">{evidence.icon}</div>
-      <div>
-        <h3 className="text-white/90 font-bold text-sm tracking-[0.05em]">
-          {evidence.title}
-        </h3>
-        <p className="text-white/40 text-xs mt-0.5">{evidence.date}</p>
-      </div>
-      <motion.div
-        className="ml-auto text-white/30"
-        animate={{ x: [0, 3, 0] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      >
-        →
-      </motion.div>
+    <div
+      className="evidence-icon"
+      style={{ background: `${evidenceColors[index]}22` }}
+    >
+      {evidenceIcons[index]}
     </div>
-  </motion.button>
+    <div className="evidence-info">
+      <div className="evidence-title">{evidence.title}</div>
+      <div className="evidence-date">{evidence.date}</div>
+    </div>
+    <span className="text-[10px] text-[#555]">→</span>
+  </motion.div>
 );
 
-const EvidenceModal = ({ evidence, onClose }) => (
+const EvidenceModal = ({ evidence, index, onClose }) => (
   <motion.div
-    className="absolute inset-0 z-30 flex items-center justify-center p-6"
+    className="modal-overlay"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    transition={{ duration: 0.5 }}
+    transition={{ duration: 0.15 }}
   >
-    <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
     <motion.div
-      className="relative w-full max-w-md rounded-2xl p-8 overflow-hidden"
-      initial={{ scale: 0.8, opacity: 0, y: 30 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      exit={{ scale: 0.8, opacity: 0, y: -30 }}
-      transition={{ type: 'spring', damping: 25 }}
-      style={{
-        background: `linear-gradient(145deg, rgba(20,20,40,0.97), rgba(10,10,30,0.97))`,
-        border: `2px solid ${evidence.color}44`,
-        boxShadow: `0 0 60px ${evidence.color}22, inset 0 0 60px ${evidence.color}05`,
-      }}
+      className="modal-content"
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.95, opacity: 0 }}
+      transition={{ duration: 0.15 }}
     >
-      {/* Ambient glow */}
-      <div
-        className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20"
-        style={{
-          background: `radial-gradient(circle, ${evidence.color}, transparent)`,
-        }}
-      />
-
-      <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <motion.div
-            className="text-4xl"
-            initial={{ rotate: -20, scale: 0 }}
-            animate={{ rotate: 0, scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
-          >
-            {evidence.icon}
-          </motion.div>
-          <div>
-            <h2 className="text-xl font-bold text-white/90" style={{ color: evidence.color }}>
-              {evidence.title}
-            </h2>
-            <p className="text-sm text-white/40">{evidence.date}</p>
-          </div>
+      <div className="modal-header">
+        <div className="flex items-center gap-2">
+          <span className="text-base">{evidenceIcons[index]}</span>
+          <h3>{evidence.title}</h3>
         </div>
-
-        <motion.div
-          className="mt-6 p-4 rounded-xl"
+        <div className="modal-close" onClick={onClose}>✕</div>
+      </div>
+      <div className="modal-body">
+        <p className="text-[11px] text-[#666] mb-3">{evidence.date}</p>
+        <div
+          className="p-4 rounded text-[12px] text-[#D0D0D0] leading-relaxed"
           style={{
-            background: `${evidence.color}08`,
-            border: `1px solid ${evidence.color}22`,
+            background: `${evidenceColors[index]}08`,
+            border: `1px solid ${evidenceColors[index]}22`,
           }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
         >
-          <p className="text-white/70 text-sm leading-relaxed italic">
-            "{evidence.description}"
-          </p>
-        </motion.div>
-
-        <motion.button
-          className="mt-8 w-full py-3 rounded-xl border border-white/10 text-white/50 
-                     text-sm hover:bg-white/5 transition-all duration-300"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          "{evidence.description}"
+        </div>
+        <button
           onClick={onClose}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          className="game-btn w-full mt-4 text-[11px] justify-center"
         >
-          Close Evidence
-        </motion.button>
+          Close
+        </button>
       </div>
     </motion.div>
   </motion.div>
@@ -118,91 +74,91 @@ const EvidenceModal = ({ evidence, onClose }) => (
 
 const DetectiveScene = ({ onComplete }) => {
   const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [allViewed, setAllViewed] = useState(false);
-  const [viewedCount, setViewedCount] = useState(0);
+  const [viewedSet, setViewedSet] = useState(new Set());
 
-  const handleViewEvidence = (evidence) => {
+  const handleOpen = (evidence) => {
+    const idx = content.detective.evidence.findIndex(e => e.id === evidence.id);
     setSelectedEvidence(evidence);
+    setSelectedIndex(idx);
   };
 
-  const handleCloseEvidence = () => {
-    setViewedCount(prev => {
-      const newCount = prev + 1;
-      if (newCount >= content.detective.evidence.length) {
-        setTimeout(() => setAllViewed(true), 500);
+  const handleClose = () => {
+    setViewedSet(prev => {
+      const next = new Set(prev);
+      next.add(selectedEvidence.id);
+      if (next.size >= content.detective.evidence.length) {
+        setTimeout(() => setAllViewed(true), 300);
       }
-      return newCount;
+      return next;
     });
     setSelectedEvidence(null);
   };
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-dark-900 via-dark-800 to-dark-900 overflow-hidden">
-      <StarField count={25} />
-      <FogParticles />
-
-      <div className="relative z-10 h-full flex flex-col">
-        {/* Header */}
-        <div className="glass border-b border-white/5 px-4 py-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-xl md:text-2xl text-gold font-bold tracking-[0.1em]">
-              {content.detective.title}
-            </h1>
-            <p className="text-[10px] text-white/30 mt-1 tracking-[0.1em] uppercase">
-              {content.detective.subtitle}
-            </p>
-          </div>
+    <div className="absolute inset-0 bg-[#1E1E1E] flex flex-col">
+      {/* Top Bar */}
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <span className="text-xs text-[#888]">Evidence Room</span>
         </div>
-
-        {/* Evidence List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-md mx-auto space-y-3">
-            {content.detective.evidence.map((evidence, i) => (
-              <EvidenceCard
-                key={evidence.id}
-                evidence={evidence}
-                index={i}
-                onClick={handleViewEvidence}
-              />
-            ))}
-          </div>
+        <div className="top-bar-right">
+          <span className="text-[10px] text-[#555]">
+            {viewedSet.size}/{content.detective.evidence.length}
+          </span>
         </div>
-
-        {/* Modal */}
-        <AnimatePresence>
-          {selectedEvidence && (
-            <EvidenceModal
-              evidence={selectedEvidence}
-              onClose={handleCloseEvidence}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Continue */}
-        <AnimatePresence>
-          {allViewed && (
-            <motion.div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-30"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1 }}
-            >
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 1 }}
-                onClick={onComplete}
-                className="px-10 py-3 rounded-full border border-gold/40 text-gold 
-                           text-sm tracking-[0.2em] uppercase hover:bg-gold/10 
-                           transition-all duration-500 hover:border-gold/60
-                           hover:shadow-[0_0_30px_rgba(212,168,83,0.2)]"
-              >
-                Continue Investigation
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="section-header">
+          <span>Case Files</span>
+          <span className="text-[10px] text-[#555]">Tap to investigate</span>
+        </div>
+
+        {content.detective.evidence.map((evidence, i) => (
+          <EvidenceItem
+            key={evidence.id}
+            evidence={evidence}
+            index={i}
+            onClick={handleOpen}
+          />
+        ))}
+      </div>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {selectedEvidence && (
+          <EvidenceModal
+            evidence={selectedEvidence}
+            index={selectedIndex}
+            onClose={handleClose}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Continue */}
+      <AnimatePresence>
+        {allViewed && (
+          <motion.div
+            className="absolute inset-0 bg-black/60 flex items-center justify-center z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.button
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.2 }}
+              onClick={onComplete}
+              className="game-btn game-btn-gold text-[11px] px-5 py-2"
+            >
+              Continue Investigation
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

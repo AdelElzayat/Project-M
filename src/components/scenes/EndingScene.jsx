@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StarField, FogParticles, Constellations, FloatingHearts } from '../effects/ParticleField';
 import content from '../../config/content';
 
 const EndingScene = ({ onRestart }) => {
@@ -8,7 +7,7 @@ const EndingScene = ({ onRestart }) => {
   const [showHeart, setShowHeart] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
   const [showRestart, setShowRestart] = useState(false);
-  const lineRef = useRef(0);
+  const [showStars, setShowStars] = useState(false);
 
   const lines = [
     content.ending.line1,
@@ -29,6 +28,11 @@ const EndingScene = ({ onRestart }) => {
     content.ending.message9,
   ];
 
+  // Stars for ending
+  useEffect(() => {
+    setShowStars(true);
+  }, []);
+
   useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
@@ -39,14 +43,12 @@ const EndingScene = ({ onRestart }) => {
         setTimeout(() => setShowHeart(true), 2000);
         setTimeout(() => setShowFinal(true), 3500);
       }
-    }, 3000);
-
+    }, 2800);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (!showFinal) return;
-
     let i = 0;
     const interval = setInterval(() => {
       setRevealedLines(prev => [...prev, lines.length + i]);
@@ -56,59 +58,75 @@ const EndingScene = ({ onRestart }) => {
         setTimeout(() => setShowRestart(true), 3000);
       }
     }, 2000);
-
     return () => clearInterval(interval);
   }, [showFinal]);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-black via-dark-900 to-black overflow-hidden">
-      <StarField count={80} />
-      <FogParticles />
-      <Constellations />
-      <FloatingHearts count={12} />
-
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 overflow-hidden">
-        {/* Main lines */}
-        <div className="text-center max-w-lg">
-          {lines.map((line, i) => (
-            <AnimatePresence key={`line-${i}`}>
-              {revealedLines.includes(i) && (
-                <motion.p
-                  className="text-xl md:text-2xl text-white/70 font-light tracking-[0.05em] mb-4"
-                  initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ duration: 1.5, ease: 'easeOut' }}
-                >
-                  {line}
-                </motion.p>
-              )}
-            </AnimatePresence>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f] flex flex-col items-center justify-center px-6 overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      {/* Stars */}
+      {showStars && (
+        <>
+          {Array.from({ length: 60 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{
+                width: Math.random() * 2 + 1,
+                height: Math.random() * 2 + 1,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                opacity: [0.2, 0.8, 0.2],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: Math.random() * 3 + 2,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+              }}
+            />
           ))}
-        </div>
+        </>
+      )}
 
-        {/* Large Heart */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-0 text-center max-w-sm">
+        {/* Main lines */}
+        {lines.map((line, i) => (
+          <AnimatePresence key={`l${i}`}>
+            {revealedLines.includes(i) && (
+              <motion.p
+                className="text-sm md:text-base text-[#D0D0D0] font-light tracking-wider mb-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                {line}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        ))}
+
+        {/* Heart */}
         <AnimatePresence>
           {showHeart && (
             <motion.div
-              className="my-8"
+              className="my-6"
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 100, damping: 10, delay: 0.3 }}
+              transition={{ type: 'spring', stiffness: 80, damping: 12, delay: 0.2 }}
             >
               <motion.span
-                className="text-7xl md:text-8xl inline-block cursor-pointer select-none"
+                className="text-5xl md:text-6xl inline-block cursor-pointer"
                 animate={{
-                  scale: [1, 1.15, 1],
+                  scale: [1, 1.12, 1],
                   textShadow: [
-                    '0 0 20px rgba(231,76,122,0.3)',
-                    '0 0 40px rgba(231,76,122,0.6)',
-                    '0 0 20px rgba(231,76,122,0.3)',
+                    '0 0 10px rgba(231,76,122,0.3)',
+                    '0 0 25px rgba(231,76,122,0.6)',
+                    '0 0 10px rgba(231,76,122,0.3)',
                   ],
                 }}
                 transition={{ duration: 1.5, repeat: Infinity }}
-                onClick={() => {
-                  // Easter egg: long press heart triggers gallery
-                }}
               >
                 ❤️
               </motion.span>
@@ -116,22 +134,22 @@ const EndingScene = ({ onRestart }) => {
           )}
         </AnimatePresence>
 
-        {/* Final messages */}
-        <div className="text-center max-w-lg">
+        {/* Final messages - scrollable if needed */}
+        <div className="overflow-y-auto max-h-[40vh] px-2">
           {showFinal && finalMessages.map((msg, i) => (
-            <AnimatePresence key={`final-${i}`}>
+            <AnimatePresence key={`f${i}`}>
               {revealedLines.includes(lines.length + i) && (
                 <motion.p
-                  className={`text-lg tracking-[0.05em] mb-2 ${
+                  className={`tracking-wider mb-2 ${
                     msg === content.ending.message9
-                      ? 'text-gold-light font-bold text-2xl mt-4 text-shadow-strong'
+                      ? 'text-[#D4A853] font-bold text-base mt-4'
                       : msg === ''
-                      ? 'h-4'
-                      : 'text-white/60'
+                      ? 'h-2'
+                      : 'text-xs text-[#888]'
                   }`}
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 1.2, ease: 'easeOut' }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
                 >
                   {msg}
                 </motion.p>
@@ -140,42 +158,37 @@ const EndingScene = ({ onRestart }) => {
           ))}
         </div>
 
-        {/* Anniversary message */}
+        {/* Anniversary + Restart */}
         <AnimatePresence>
           {showRestart && (
             <motion.div
-              className="text-center mt-8"
+              className="mt-6 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 2 }}
+              transition={{ duration: 1 }}
             >
               <motion.h2
-                className="text-3xl md:text-4xl text-gold font-bold tracking-[0.1em] mb-4 text-shadow-strong"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-lg md:text-xl text-[#D4A853] font-bold tracking-wider mb-2"
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 1.5 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
               >
                 {content.ending.anniversary} {content.ending.heartEmoji}
               </motion.h2>
-
               <motion.p
-                className="text-white/40 text-sm tracking-[0.1em] mt-2"
+                className="text-[10px] text-[#666] mb-5"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 2, duration: 1.5 }}
+                transition={{ delay: 1.5, duration: 0.6 }}
               >
                 {content.ending.message}
               </motion.p>
-
               <motion.button
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 4, duration: 1 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 3, duration: 0.3 }}
                 onClick={onRestart}
-                className="mt-10 px-8 py-3 rounded-full border border-gold/40 text-gold 
-                           text-sm tracking-[0.2em] uppercase hover:bg-gold/10 
-                           transition-all duration-500 hover:border-gold/60
-                           hover:shadow-[0_0_30px_rgba(212,168,83,0.2)]"
+                className="game-btn game-btn-gold text-[11px] px-5 py-2"
               >
                 Experience Again
               </motion.button>
